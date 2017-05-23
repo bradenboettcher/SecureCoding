@@ -25,19 +25,20 @@ int main()
 	int theBool = 0;
 	char firstname [BUFFERSIZE];
 	char lastname [BUFFERSIZE];
-	char a[19], b[19];
-	char *e;
-	long num1, num2;
-	long addResult;
-	long multiplyResult;
 	FILE * input;
 	FILE * output;
 	regex_t nameRegex;
-	char nameRegStr[] = "^[A-Z][a-z]{1,49}$\0";
-	/*regex_t numRegex;
-	regex_t inputFileRegex;
-	regex_t outputFileRegex;*/
+	char nameRegStr[] = "^[A-Z][a-z]{1,49}+\n?$";
+	char a[18], b[18];
+	char *e;
+	long num1=0, num2=0, addResult=-1, multiplyResult=-1;
+	int validRegex1 = 1;
+	int validRegex2 = 1;
+	char numRegStr[] = "^([0-9])+\n?$\0";
 	int c;
+	regex_t numRegex;
+	/*regex_t inputFileRegex;
+	regex_t outputFileRegex;*/
 	int valid = 1; /*regex validity is backward -> 0 is good, 1 is bad*/	
 
 
@@ -45,16 +46,6 @@ int main()
 	bzero(firstname, BUFFERSIZE);
 	bzero(lastname, BUFFERSIZE);
 
-	/*
-	printf("Enter First Name: ");
-	fgets(firstname, BUFFERSIZE, stdin);
-
-	if(firstname[BUFFERSIZE-1] != '\0')
-	{
-		printf("Name too long");
-		while((c = getchar()) != '\n' && c != EOF);
-	}
-	*/
 
 	/*CREATE/COMPILE REGEX*/
 	regcomp(&nameRegex, nameRegStr, REG_EXTENDED|REG_NOSUB);
@@ -64,7 +55,7 @@ int main()
 		/*GET INPUT*/
 		bzero(firstname,51);
 		printf("Enter First Name (capital letter followed by lowercase letters: ");
-		fgets(firstname,50,stdin);
+		fgets(firstname,BUFFERSIZE,stdin);
 		
 
 		if(strlen(firstname) < 49)
@@ -74,14 +65,14 @@ int main()
 		/*CHECK AGAINST THE REGEX*/
 		/*printf("Your name is: %s\n",firstname);*/	
 		valid = regexec(&nameRegex, firstname, (size_t)0, NULL, 0);
-		/*printf("0 = match, 1 = no match: %d\n",valid);*/
+		printf("0 = match, 1 = no match: %d\n",valid);
 	}
 	valid = 1;
 	while(valid == 1)
 	{
 		/*GET INPUT*/
 		bzero(lastname,51);
-		printf("Enter First Name (capital letter followed by lowercase letters: ");
+		printf("Enter Last Name (capital letter followed by lowercase letters: ");
 		fgets(lastname,50,stdin);
 		
 
@@ -103,50 +94,78 @@ int main()
 
 	/*FREE THE REGEX*/
 	regfree(&nameRegex);
-	printf("Enter the first number: ");
-	fgets(a, 19, stdin);
-	printf("Enter in the second number: ");
-	fgets(b, 19, stdin); /*19 is the max amount of digits that a long can be */
-
-
-	/*converts the two string numbers into longs */
-	num1 = strtol(a, &e, 10);
-	num2 = strtol(b, &e, 10);
 
 	password();
 
-	addResult = safeAdd(num1, num2);
-	multiplyResult = safeMultiply(num1, num2);
-	while(addResult == -1)
+	while(addResult == -1 || multiplyResult == -1)
 	{
-		printf("Invalid addition, Integer Overflow.\n");
-		printf("Please enter in valid numbers");
-		printf("Enter the first number: ");
-		fgets(a, 19, stdin);
-		printf("Enter in the second number: ");
-		fgets(b, 19, stdin); /*19 is the max amount of digits that a long can be */
+		validRegex1 = 1;
+		validRegex2 = 1;
+
+		while(validRegex1 == 1)
+		{
+			
+			validRegex1 = 1;
+		
+			regcomp(&numRegex, numRegStr, REG_EXTENDED|REG_NOSUB);
+
+			/* get input */
+			bzero(a, 18);
+
+			printf("Enter the first number: ");
+			fgets(a, 18, stdin);
+			if(strlen(a) < 17)
+			{
+				printf("Press Enter...\n\n");
+			}
+			/*https://stackoverflow.com/questions/2187474/i-am-not-able-to-flush-stdin*/
+			while ((c = getchar()) != '\n' && c != EOF){}
+
+			/*check against the regex */
+			printf("Num 1 is: %s\n\n", a);
+			validRegex1 = regexec(&numRegex, a, (size_t)0, NULL, 0);
+			printf("0 = match, 1 = no match: %d\n\n", validRegex1);
+		}
+
+		while(validRegex2 == 1)
+		{
+			
+			validRegex2 = 1;
+
+			regcomp(&numRegex, numRegStr, REG_EXTENDED|REG_NOSUB);
+			bzero(b, 18);
+
+			printf("Enter the second number: ");
+			fgets(b, 18, stdin);
+			if(strlen(b) < 17)
+				printf("Press Enter...\n\n");
+			while ((c = getchar()) != '\n' && c != EOF){}
+
+			printf("Num 2 is: %s\n\n", b);
+			validRegex2 = regexec(&numRegex, b, (size_t)0, NULL, 0);
+			printf("0 = match, 1 = no match: %d\n\n", validRegex2);
+		}
 
 		num1 = strtol(a, &e, 10);
 		num2 = strtol(b, &e, 10);
 
 		addResult = safeAdd(num1, num2);
-	}
-
-	while(multiplyResult == -1)
-	{
-		printf("Invalid addition, Integer Overflow.\n");
-		printf("Please enter in valid numbers");
-		printf("Enter the first number: ");
-		fgets(a, 19, stdin);
-		printf("Enter in the second number: ");
-		fgets(b, 19, stdin); /*19 is the max amount of digits that a long can be */
-
-		num1 = strtol(a, &e, 10);
-		num2 = strtol(b, &e, 10);
-
 		multiplyResult = safeMultiply(num1, num2);
-	}
 
+		if(addResult == -1)
+		{
+			printf("Integer Overflow in addition\n\n");
+		}
+
+		if(multiplyResult == -1)
+		{
+			printf("Integer Overflow in multiplication\n\n");
+		}
+
+		printf("addition result is: %ld\n\n", addResult);
+		printf("multiplication result is: %ld\n\n", multiplyResult);
+	}
+	regfree(&numRegex);
 
 	while(theBool != 1)
 	{
@@ -280,41 +299,59 @@ long safeMultiply(long a, long b)
 	return a * b;
 }
 
-void password()
-{
-	char temp[200] = "";
-	char salt[] = "h4ck3r5";
-	char password[100];
-	char password2[100];
-	unsigned long fromFile = 0;
-	unsigned long check;
-	FILE *fp;
+void password(){
+    char temp[200] = "";
+    char salt[] = "h4ck3r5";
+    char password[100];
+    char password2[100];
+    unsigned long fromFile = 0;
+    unsigned long check = 0;
+    int c;
+    FILE *fp;
 
-	printf("Enter a password: ");
-	fgets(password, 99, stdin);
-	strcat(temp, salt);
-	strcat(temp, password);
+    printf("Enter a password: ");
 
-	fp = fopen("password.txt", "w");
-	fprintf(fp, "%lu", hash(temp));
-	fclose(fp);
-	fp = fopen("password.txt", "r");
-	fscanf(fp, "%lu", &fromFile);
-	printf("Re-enter your password: ");
-	fgets(password2, 99, stdin);
-	bzero(temp, 200);
-	strcat(temp, salt);
-	strcat(temp, password2);
-
-	check = hash(temp);
-	while(check != fromFile)
+    fgets(password, 99, stdin);
+	if(strlen(password) < 98)
 	{
-		printf("Re-enter your password: ");
-		fgets(password2, 99, stdin);
-		bzero(temp, 200);
-		strcat(temp, salt);
-		strcat(temp, password2);
-		check = hash(temp);
+	printf("Press Enter...");
 	}
-}
+	while ((c = getchar()) != '\n' && c != EOF){}
 
+    strcat(temp, salt);
+    strcat(temp, password);;
+    
+    
+    fp = fopen("password.txt", "w");
+    fprintf(fp, "%lu", hash(temp));
+    fclose(fp);
+    fp = fopen("password.txt", "r");
+    fscanf(fp, "%lu", &fromFile);
+    printf("Re-enter your password: ");
+    fgets(password2, 99, stdin);
+	if(strlen(password2) < 98)
+	{
+		printf("Press Enter...");
+	}
+	while ((c = getchar()) != '\n' && c != EOF){}
+
+
+    bzero(temp, 200);
+    strcat(temp, salt);
+    strcat(temp, password2);
+    check = hash(temp);
+    while(check != fromFile){
+        printf("Re-enter your password: ");
+        fgets(password2, 99, stdin);
+	if(strlen(password2) < 98)
+	{
+		printf("Press Enter...");
+	}
+	while ((c = getchar()) != '\n' && c != EOF){}
+        bzero(temp, 200);
+        strcat(temp, salt);
+        strcat(temp, password2);
+        check = hash(temp);
+    }
+	printf("Correct Password.\n");
+}
